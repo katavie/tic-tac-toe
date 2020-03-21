@@ -1,4 +1,5 @@
 import string
+import random
 
 board = [
     [" ", " ", " "],
@@ -7,6 +8,9 @@ board = [
 ]
 
 players = {"X": "Player 1 (X)", "O": "Player 2 (O)"}
+
+allowed_letters = ["A", "B", "C"]
+allowed_numbers = ["1", "2", "3"]
 
 def display_board():
     '''
@@ -81,21 +85,23 @@ def check_input(raw_input):
     '''
     processed_input = raw_input.upper()
 
-    allowed_letters = ["A", "B", "C"]
-    allowed_numbers = ["1", "2", "3"]
-
     if len(processed_input) != 2:
         return False
     
     if processed_input[0] not in allowed_letters or processed_input[1] not in allowed_numbers:
         return False
 
-    # if square is empty
     row = allowed_numbers.index(processed_input[1])
     col = allowed_letters.index(processed_input[0])
-    if board[row][col] == " ":
+
+    if is_square_empty(row, col):
         return processed_input
 
+    return False
+
+def is_square_empty(row, col):
+    if board[row][col] == " ":
+        return True
     return False
 
 def get_result_message(board):
@@ -123,34 +129,62 @@ def get_result_message(board):
     # tie: board is full but no 3-in-a-row
     return "There was a tie :0"
 
-current_player = "X"
+def generate_move():
+    col = random.choice(["A", "B", "C"])
+    row = random.choice(["1", "2", "3"])
+    move = col + row
+
+    boardRow = allowed_numbers.index(move[1])
+    boardCol = allowed_letters.index(move[0])
+
+    # check that this move isn't already filled in the board
+    if is_square_empty(boardRow, boardCol):
+        return move
+    else:
+        return generate_move()
+
+current_player = ["X", random.choice(["computer", "human"])]
+
+if current_player[1] == "computer":
+    print(f"Computer plays first as {players[current_player[0]]}")
 
 while not is_game_over(board):
-    print(f"Your turn, {players[current_player]}.")
+    if current_player[1] == "computer":
+        valid_move = generate_move()
+        print(f"{players[current_player[0]]} (Computer) played {valid_move}!")
 
-    user_input = input("Enter your move by selecting a square (e.g. B2): ")
-    valid_move = check_input(user_input)
+    else: # human player
+        print(f"Your turn, {players[current_player[0]]}.")
 
-    while not valid_move:
-        print("Invalid move :(\n")
-        print(f"Still your turn, {players[current_player]}.")
         user_input = input("Enter your move by selecting a square (e.g. B2): ")
         valid_move = check_input(user_input)
+
+        while not valid_move:
+            print("Invalid move :(\n")
+            print(f"Still your turn, {players[current_player[0]]}.")
+            user_input = input("Enter your move by selecting a square (e.g. B2): ")
+            valid_move = check_input(user_input)
 
     # place X/O on selected square
     letter_to_number = {"A": 0, "B": 1, "C": 2}
     letter = valid_move[0]
     number = valid_move[1]
-    board[int(number) - 1][letter_to_number[letter]] = current_player
+    board[int(number) - 1][letter_to_number[letter]] = current_player[0]
 
     display_board()
     print("\n")
 
-    # switch player
-    if current_player == "X":
-        current_player = "O"
+    # switch X/O
+    if current_player[0] == "X":
+        current_player[0] = "O"
     else:
-        current_player = "X"
+        current_player[0] = "X"
+    
+    # switch human/computer
+    if current_player[1] == "computer":
+        current_player[1] = "human"
+    else:
+        current_player[1] = "computer"
 
 print("Game over!")
 print(get_result_message(board))
